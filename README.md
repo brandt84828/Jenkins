@@ -134,9 +134,70 @@ Jenkins的特色：
 | CI Server               | 192.168.66.101 | Jenkins-2.190.3, JDK1.8, Maven3.6.2, Git, SonarQube |
 | Application Test Server | 192.168.66.102 | JDK1.8, Tomcat8.5                                   |
 
-GitLab代碼託管服務安裝
-GitLab簡介
+### GitLab代碼託管服務安裝
 GitLab是一個用於倉庫管理系統的開源專案，使用Git作為代碼管理工具，並在此基礎上搭建起來的web服務。
-GitLab和GitHub一樣屬於協力廠商基於Git開發的作品，免費且開源（基於MIT協議），與Github類似，可以註冊用戶，任意提交你的代碼，添加SSHKey等等。不同的是，GitLab是可以部署到自己的伺服器上，資料庫等一切資訊都掌握在自己手上，適合團隊內部協作開發，簡單來說可把GitLab看作個人版的GitHub。
+GitLab和GitHub一樣屬於協力廠商基於Git開發的作品，免費且開源（基於MIT協議），與Github類似，可以註冊使用者並任意提交Code，添加SSHKey等等。不同的是，GitLab是可以部署到自己的伺服器上，資料庫等一切資訊都掌握在自己手上，適合團隊內部協作開發。
 
-GitLab安裝
+
+#### GitLab安裝
+```bash
+# 1.安裝相關依賴
+yum -y install policycoreutils openssh-server openssh-client postfix
+
+# 2.啟動ssh服務&設置開機啟動
+systemctl enable sshd && sudo systemctl start sshd
+
+# 3.設置postfix開機自動啟動，postfix支援gitlab發信功能
+systemctl enable postfix && systemctl start postfix
+
+# 4.開啟ssh以及http服務，然後重新加載防火牆列表，如果關閉防火牆就不用作以下配置
+firewall-cmd --add-service=ssh --permanent
+firewall-cmd --add-service=http --permanent
+firewall-cmd --reload
+
+# 5.下載gitlab包並且安裝
+
+# 6.修改gitlab配置，修改gitlab url和port，默認為80
+vi /etc/gitlab/gitlab.rb
+
+# 7.重新載入配置和啟動gitlab
+gitlab-ctl reconfigure
+gitlab-ctl restart
+
+# 8.添加port到防火牆
+firewall-cmd --zone=public --add-port=82/tcp --permanent
+firewall-cmd --reload
+```
+
+#### GitLab create group / user / project
+* Create a group
+
+點選Create a group就可以建立一個群組。
+
+* Create a project
+
+進入創建的群組後，再點擊New project創建項目。
+
+* Create a user
+
+點選最上面的Admin Area，再點選Users，就能進入user介面，在這裡可以創建用戶。
+
+* 將用戶加入群組
+
+打開創建的群組，點選左側的Members，找到創建的用戶，後面有權限設置，選擇需要的權限，點選Add to group即可加入。
+```
+Guest：可以建立issue、發表評論，不能讀寫版本資料
+Reporter：可以克隆，不能提交，QA、PM可以賦予這個權限
+Developer：可以克隆、開發、提交、push，普通開發者可以賦予這個權限
+Maintainer：可以創建項目、添加tag、保護分支、添加成員、編輯，核心開發者可以賦予這個權限
+Owner：可以設置訪問權限 - Visibility Level、删除、搬遷、管理成員，開發組組長可以賦予這個權限
+```
+
+
+### Jenkins安裝
+
+
+
+## Reference
+[GitLab Docs](https://docs.gitlab.com/ee/)
+
