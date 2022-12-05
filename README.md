@@ -123,7 +123,7 @@ Jenkins的特色：
 
 1. 首先，開發人員每天進行提交，提交到Git倉庫
 2. Jenkins作為持續集成工具，使用Git工具到Git倉庫拉取Code到CI Server，再配合JDK，Maven等軟體完成編譯、測試、審查、打包等工作，在這個過程中每一步出錯，都重新再執行一次整個流程
-3. 最後，Jenkins把生成的jar或war包分發到測試伺服器或者生產伺服器，測試人員或用戶就可以存取/訪問
+3. 最後，Jenkins把生成的jar或war包分發到測試伺服器或者生產伺服器，測試人員或使用者就可以存取/訪問
 
 
 ### Server List
@@ -180,11 +180,11 @@ firewall-cmd --reload
 
 * Create a user
 
-點選最上面的Admin Area，再點選Users，就能進入user介面，在這裡可以創建用戶。
+點選最上面的Admin Area，再點選Users，就能進入user介面，在這裡可以創建使用者。
 
-* 將用戶加入群組
+* 將使用者加入群組
 
-打開創建的群組，點選左側的Members，找到創建的用戶，後面有權限設置，選擇需要的權限，點選Add to group即可加入。
+打開創建的群組，點選左側的Members，找到創建的使用者，後面有權限設置，選擇需要的權限，點選Add to group即可加入。
 ```
 Guest：可以建立issue、發表評論，不能讀寫版本資料
 Reporter：可以克隆，不能提交，QA、PM可以賦予這個權限
@@ -195,9 +195,104 @@ Owner：可以設置訪問權限 - Visibility Level、删除、搬遷、管理�
 
 
 ### Jenkins安裝
+```bash
+# 1.安裝JDK，安裝目錄為/usr/lib/jvm
+yum install java-1.8.0-openjdk* -y
 
+# 2.從Jenkins官網下載安裝檔
 
+# 3.安裝Jenkins
+
+# 4.修改Jenkins配置
+vi /etc/sysconfig/jenkins
+
+JENKINS_USER="root"
+JENKINS_PORT="8888"
+
+# 5.啟動Jenkins
+systemctl start jenkins
+
+# 6.訪問，如有設置防火牆須加入port
+
+# 7.獲取admin密碼並登入
+cat /var/lib/jenkins/secrets/initialAdminPassword
+```
+
+### Jenkins plugin管理
+Jenkins本身不提供很多功能，可以透過使用plugin來滿足使用。例如從Gitlab拉取代碼，使用Maven構建專案等功能需要依靠plugin完成。
+自帶的plugin下載是國外的地址，可能會比較慢，可以更換下載地址。
+
+Jenkins->Manage Jenkins->Manage Plugins，點選Available。
+
+這個步驟是把Jenkins官方plugin list下載到本地，接著修改下載位址。
+```bash
+cd /var/lib/jenkins/updates/
+sed -i 's/http:\/\/updates.jenkinsci.org\/download/https:\/\/mirrors.tuna.tsinghua.edu.cn\/jenkins/g' default.json && sed -i 's/http:\/\/www.google.com/https:\/\/www.baidu.com/g' default.json
+```
+最後Manage plugin點Advanced，把Update Site更改下載地址。
+```
+修改Update Site為https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/update-center.json，然後submit並重啟Jenkins服務。
+
+重啟 https://ip:port/restart
+```
+
+### Jenkins使用者權限管理
+* 安裝Role-based Authorization Strategy plugin : Jenkins可以利用Role-based Authorization Strategy plugin來管理Jenkins使用者。
+
+* 選取Role-Based Strategy : 點選Manage Jenkins -> Configure Global Security，在Authorization中選擇Role-Based Strategy。
+
+* 建立角色 : 點選Manage Jenkins -> Manage and Assign Roles-Manage Role -> Manage Roles
+```
+Global roles（全域角色）：管理員等高級使用者可以創建基於全域的角色 
+
+Item rols（項目角色）：針對某個或者某些項目的角色
+
+Node roles（節點角色）：節點相關的存取權
+
+在Global roles裡新建一個baseRole的角色，是為了給新使用者分配最基本的Jenkins操作存取權，比如登錄存取權，這邊將baseRole的Overall中的Read打勾。
+
+在Item roles裡新建role1和role2的角色，並指定Pattern(輸入正則表達式)，Pattern是用來表示這個role可以訪問的項目，這裡用project1.*和project2.*來配置，表示role1可以訪問project1前綴的項目，role2可以訪問project2前綴的項目，並把Job的存取權都打勾。
+
+最後記得Save。
+```
+* 建立使用者 : 點選Manage Jenkins -> Manage Users -> Create User
+```
+# 建立
+Account / Password / Email
+qctuser1 / 123456 / qctuser1@qct.io
+qctuser2 / 123456 / qctuser2@qct.io
+```
+
+* 分配角色 : 點選Manage Jenkins -> Configure Global Security -> Assign Roles
+```
+將qctuser1 & qctuser2加入Global roles並分配baseRole
+
+將qctuser1 & qctuser2加入Item roles並分別分配role1和role2
+```
+
+* 新建Item : 建立兩個項目分別對應project1*和project2*
+
+### Jenkins憑證管理
+憑證可以用來儲存密文保護的資料庫密碼、Gitlab密碼、Docker私有倉庫密碼等，以便Jenkins可以和這些第三方應用進行交互。
+
+* 安裝Credentials Binding plugin
+* 可以從Manage Jenkins -> Manage Credentials存取
+* 在Stores scoped to Jenkins底下點選global，這邊可以新增憑證
+```
+Username with password：用戶名和密碼
+
+SSH Username with private key： 使用SSH用戶和金鑰
+
+Secret file：需要保密的文字檔，使用時Jenkins會將檔案複製到一個臨時目錄中，再將檔案路徑設置到一個變數中，等構建結束後，所複製的Secret file就會被刪除。
+
+Secret text：需要保存的一個加密的字串，如Github的api token
+
+Certificate：透過上傳證書檔案的方式
+
+常用的憑證類型有：Username with password（使用者密碼）和SSH Username with private key（SSH 金鑰），為了demo，需要下載Git plugin，伺服器上也要安裝Git服務。
+```
 
 ## Reference
 [GitLab Docs](https://docs.gitlab.com/ee/)
 
+[Jenkins](https://www.jenkins.io/download/)
