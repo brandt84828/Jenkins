@@ -318,6 +318,94 @@ yum install git -y
     6. 點選Bulid Now構建，可以在Console Output看到編譯的訊息
     7. 可以從/var/jenkins_home/workspace/底下路徑找相關project就可以看到拉下來的Code
 
+### Maven安裝和配置
+
+* 安裝Maven
+```bash
+#下載Maven
+wget https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz --no-check-certificate
+
+#解壓縮
+tar -zxvf apache-maven-3.8.6-bin.tar.gz -C /opt/maven/
+
+#配置環境變數
+vim /etc/profile
+
+#使環境變數生效
+source /etc/profile
+
+#測試maven是否安裝成功
+mvn -v
+
+#配置文件內容
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
+export MAVEN_HOME=/opt/maven
+export PATH=$PATH:$JAVA_HOME/bin:$MAVEN_HOME/bin
+```
+
+* 點選Manage Jenkins -> Global Tool Configuration -> JDK -> Add JDK，填入Name和JAVA_HOME的值(取消勾選Install automatically)
+
+* 在下面的Maven也是填入Name和MAVEN_HOME的值(取消勾選Install automatically)
+
+* 加入全域變數，Manage Jenkins -> Config System -> Global properties，點選Apply -> Save
+```
+JAVA_HOME : /usr/lib/jvm/java-1.8.0-openjdk
+
+MAVEN_HOME : /opt/maven
+
+PATH+EXTRA : $MAVEN_HOME/bin
+```
+
+* 測試Maven配置，點選Jenkins的項目 -> 配置，在Add Build Step使用shell，輸入mvn clean package後 -> Build Now即可查看Consloe Output
+
+### Tomcat安裝和配置
+* 安裝Tomcat
+```bash
+# 下載Tomcat
+wget https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.84/bin/apache-tomcat-8.5.84.tar.gz --no-check-certificate
+
+# 解壓縮
+tar -zxvf apache-tomcat-8.5.84.tar.gz
+
+# 啟動
+cd apache-tomcat-8.5.84/bin/
+./startup.sh
+#如果訪問不到可以去conf/server.xml更改port
+```
+
+* 配置Tomcat角色權限
+
+預設情況下，Tomcat是沒有配置使用者角色，點選manager webapp，會提示403錯誤，但是Jenkins部署到Tomcat，需要用到Tomcat的使用者，所以需要修改Tomcat的tomcat-users.xml配置檔案，建立使用者和存取權限。
+```xml
+<tomcat-users>
+    <role rolename="tomcat"/>
+    <role rolename="role1"/>
+    <role rolename="manager-script"/>
+    <role rolename="manager-gui"/>
+    <role rolename="manager-status"/>
+    <role rolename="admin-gui"/>
+    <role rolename="admin-script"/>
+    <user username="tomcat" password="tomcat" roles="manager-gui,manager-script,tomcat,admin-gui,admin-script"/>
+</tomcat-users>
+```
+為了能夠用上述配置登入到Tomcat還需要修改以下配置
+```bash
+vi /opt/tomcat/webapps/manager/META-INF/context.xml
+
+#註解掉
+<!--
+<Value className="org.apache.catalina.valves.RemoteAddrValve" allow="xxxxxxx"/>
+-->
+```
+
+* 重啟Tomcat
+```bash
+/opt/tomcat/bin/shutdown.sh
+/opt/tomcat/bin/startup.sh
+
+訪問http://ip:port/manager/html，輸入tomcat/tomcat
+
+```
 
 ## Reference
 [GitLab Docs](https://docs.gitlab.com/ee/)
