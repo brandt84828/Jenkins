@@ -291,6 +291,33 @@ Certificate：透過上傳證書檔案的方式
 
 常用的憑證類型有：Username with password（使用者密碼）和SSH Username with private key（SSH 金鑰），為了demo，需要下載Git plugin，伺服器上也要安裝Git服務。
 ```
+* 安裝git，jenkins安裝git plugin，jenkins server安裝git
+```bash
+yum install git -y
+```
+
+* (Demo)透過用戶密碼類型拉取code
+    1. Manage Jenkins -> Manage Credentials -> global -> Add Credentials
+    2. 選擇Username with password，填寫相關資訊
+    3. 選擇project -> Genaral中的Source Code Management選擇git輸入Repository url(http)並使用建立的憑證
+    4. 點選Bulid Now構建，可以在Console Output看到編譯的訊息
+    5. 可以從/var/jenkins_home/workspace/底下路徑找相關project就可以看到拉下來的Code
+
+* (Demo)透過SSH密鑰類型
+    ![SSH](/Pictures/SSH.jpg)
+    1. 使用root生成公鑰和私鑰
+    ```bash
+    ssh-keygen -t rsa
+
+    #在/root/.ssh/目錄下保存了公鑰和私鑰
+    ```
+    2. 把生成的公鑰放在Gitlab中
+    3. Manage Jenkins -> Manage Credentials -> global -> Add Credentials
+    4. 選擇SSH Username with private key，填寫相關資訊
+    5. 選擇project -> Genaral中的Source Code Management選擇git輸入Repository url(ssh)並使用建立的憑證
+    6. 點選Bulid Now構建，可以在Console Output看到編譯的訊息
+    7. 可以從/var/jenkins_home/workspace/底下路徑找相關project就可以看到拉下來的Code
+
 
 ## Reference
 [GitLab Docs](https://docs.gitlab.com/ee/)
