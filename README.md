@@ -304,6 +304,7 @@ yum install git -y
     5. 可以從/var/jenkins_home/workspace/底下路徑找相關project就可以看到拉下來的Code
 
 * (Demo)透過SSH密鑰類型
+
     ![SSH](/Pictures/SSH.jpg)
     1. 使用root生成公鑰和私鑰
     ```bash
