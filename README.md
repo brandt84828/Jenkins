@@ -404,8 +404,41 @@ vi /opt/tomcat/webapps/manager/META-INF/context.xml
 /opt/tomcat/bin/startup.sh
 
 訪問http://ip:port/manager/html，輸入tomcat/tomcat
-
 ```
+
+### Jenkins構建的項目類型介紹
+
+#### Jenkins構建類型介紹
+Jenkins中自動構建類型有很多，常用的有以下三種：
+* FreeStyle Project
+* Maven Project
+* Pipeline Project
+
+每種類型的構建都可以完成一樣的構建過程與結果，只是在操作方式和靈活度等方面有所區別，實際開發的時候可以根據需求和使用習慣選擇。(推薦使用Pipeline Project，靈活度非常高)
+
+#### (Demo)FreeStyle Project
+* 創建項目並拉取程式
+
+新建一個FreeStyle Project，從Source Code Management選擇從Git並配置Credentials。
+
+* 編譯打包
+在Build裡找到Add build step，選擇"Execute shell"，並輸入以下內容，選擇應用並保存。
+```bash
+echo "開始編譯和打包"
+mvn clean package
+echo "編譯和打包結束"
+```
+
+* 部屬
+    1. Jenkins本身無法實現遠程部屬到Tomcat的功能，需要安裝Deploy to container plugin實現
+    2. 添加tomcat使用者憑證
+    3. 接著回到FreeStyle Project的配置，找到Post-build Actions，選擇"Deploy war/ear to a container"並填寫。
+    ```
+    WAR/EAR files : target/*.war
+    Containers : Tomcat 8.x Remote，選擇tomcat憑證(沒有需要先新增)，填寫tomcat server url
+    ```
+
+
 
 ## Reference
 [GitLab Docs](https://docs.gitlab.com/ee/)
