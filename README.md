@@ -447,6 +447,101 @@ echo "編譯和打包結束"
 * 拉取和部屬的過程和FreeStyle Project相同，只是"構建"的部分不同，在Build裡需要指定pom.xml並設置Maven命令，在Goals and options裡輸入clean package(默認有mvn)。在Post-build Actions裡選擇Deploy war/ear to a container最後保存構建。
 
 
+#### Pipeline項目構建
+* 概念
+
+Pipeline，簡單來說，就是一套運行在Jenkins上的工作流框架，將原來獨立運行於單個或者多個節點的任務連接起來，實現單個任務難以完成的複雜流程編排和視覺化的工作。
+
+* 好處
+
+    * Code：Pipeline以Code的形式實現，通常被檢入原始程式碼控制，使團隊能夠編輯，審查和迭代其傳送流程。
+    * 持久：無論是計畫內的還是計畫外的伺服器重啟，Pipeline都是可恢復的。
+    * 可停止：Pipeline可接收交互式輸入，以確定是否繼續執行Pipeline。
+    * 多功能：Pipeline支援現實世界中複雜的持續整合要求。它支援fork/join、迴圈執行，平行執行任務的功能。
+    * 可擴展：Pipeline Plugin支援其DSL的自訂擴展，以及與其他Plugin集成的多個選項。
+
+* 如何創建
+    * 使用上要先安裝Pipeline plugin，在新建項目時才會出現選項
+    * Pipeline腳本是由Groovy語言實現的，但沒必要單獨去學習Groovy
+    * Pipeline支援兩種語法：Declarative（聲明式）和Scripted Pipeline（腳本式）語法
+    * Pipeline也有兩種創建方法：可以直接在Jenkins的Web UI介面中輸入腳本；也可以透過創建一個Jenkinsfile指令檔放入項目源碼庫中（一般都推薦在Jenkins中直接從原始程式碼控制（SCM）中直接載入Jenkinsfile Pipeline這種方法）
+
+#### Pipeline語法快速入門(Declarative聲明式-Pipeline)
+* 創建Pipeline Project，在Pipeline script，選擇Hello World模板。
+```
+pipeline {
+    agent any
+
+    stages {
+        stage('Hello') {
+            steps {
+                echo 'Hello World'
+            }
+        }
+    }
+}
+```
+聲明式的最外層是pipeline，stages代表整個Pipeline所有的執行階段，通常只有一個stages，裡面包含了多個stage，每個stage代表Pipeline的某個階段，像是拉取Code、編譯構建和部署等。steps代表一個階段內需要執行的邏輯，steps裡是shell腳本，像是git拉取Code和ssh遠程發佈等。
+
+* 一個簡單的聲明式Pipeline例子：
+```
+pipeline {
+    agent any
+    stages {
+        stage('pull code') {
+            steps {
+                echo 'pull code'
+            }
+        }
+        stage('build project') {
+            steps {
+                echo 'build project'
+            }
+        }
+        stage('publish project') {
+            steps {
+                echo 'publish project'
+            }
+        }
+    }
+}
+```
+可以從Pipeline view去看執行結果，Pipeline view是Pipeline project特有的，它展現執行的過程和時間等，需要安裝Pipeline Stage View plugin。
+
+
+#### Pipeline語法快速入門(Scripted Pipeline腳本式-Pipeline)
+* 創建一個Pipeline Project，Pipeline script中選擇Scripted Pipeline。
+```
+node {
+    def mvnHome
+    stage('Preparation') { // for display purposes
+        // Get some code from a GitHub repository
+        git 'https://github.com/jglick/simple-maven-project-with-tests.git'
+        // Get the Maven tool.
+        // ** NOTE: This 'M3' Maven tool must be configured
+        // **       in the global configuration.
+        mvnHome = tool 'M3'
+    }
+    stage('Build') {
+        // Run the maven build
+        withEnv(["MVN_HOME=$mvnHome"]) {
+            if (isUnix()) {
+                sh '"$MVN_HOME/bin/mvn" -Dmaven.test.failure.ignore clean package'
+            } else {
+                bat(/"%MVN_HOME%\bin\mvn" -Dmaven.test.failure.ignore clean package/)
+            }
+        }
+    }
+    stage('Results') {
+        junit '**/target/surefire-reports/TEST-*.xml'
+        archiveArtifacts 'target/*.jar'
+    }
+}
+```
+1. node代表一個Jenkins節點，Master或者是Agent，是執行Step的具體運行環境，後續在Jenkins的Master-Slave架構會使用。
+2. Stage代表一個階段，Pipeline可以劃分多個Stage，每個Stage代表一組操作，像是Build、Test、Deploy，Stage是一個邏輯分組的概念。
+3. Step代表一個步驟，是最基本的操作單元，可以是一個Shell命令。
+4. 在Pipeline專案裡，有一個Pipeline語法的超連結，點選可以看到有一些常用的Steps，可以選擇對應的範例加上需要的參數，就可以產生Step。
 
 ## Reference
 [GitLab Docs](https://docs.gitlab.com/ee/)
