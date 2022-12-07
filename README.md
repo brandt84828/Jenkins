@@ -438,6 +438,13 @@ echo "編譯和打包結束"
     Containers : Tomcat 8.x Remote，選擇tomcat憑證(沒有需要先新增)，填寫tomcat server url
     ```
 
+#### Maven項目構建
+* 安裝Maven Integration Plugin
+
+* 創建Maven項目
+
+* 拉取和部屬的過程和FreeStyle Project相同，只是"構建"的部分不同，在Build裡需要指定pom.xml並設置Maven命令，在Goals and options裡輸入clean package(默認有mvn)。在Post-build Actions裡選擇Deploy war/ear to a container最後保存構建。
+
 
 
 ## Reference
