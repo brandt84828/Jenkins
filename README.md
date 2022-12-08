@@ -543,6 +543,89 @@ node {
 3. Step代表一個步驟，是最基本的操作單元，可以是一個Shell命令。
 4. 在Pipeline專案裡，有一個Pipeline語法的超連結，點選可以看到有一些常用的Steps，可以選擇對應的範例加上需要的參數，就可以產生Step。
 
+#### Pipeline Script From SCM
+在Jenkins裡編寫腳本不方便維護，有另一種方式解決這個問題，把Pipeline Script放到項目裡，用版本控制來跟蹤記錄。
+在專案根目錄(建議放在根目錄下)建立一個Jenkinsfile檔，檔案名稱為Jenkinsfile(建議不更動)，將剛才的內容複製進來，提交後到Jenkins執行。
+```bash
+pipeline {
+    agent any
+
+    stages {
+        stage('pull code') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'xxxxx', url: 'git url']]])
+            }
+        }
+        stage('build projct') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('deploy project') {
+            steps {
+                deploy adapters: [tomcat8(credentialsId: 'xxxxx', path: '', url: 'http://x.x.x.x:port')], contextPath: null, war: 'target/*.war'
+            }
+        }
+    }
+}
+```
+
+### Jenkins項目構建項目細節(1)-常用的構建觸發器
+Jenkins內建4種建構觸發器 : 
+* 觸發遠程構建
+* 其他工程構建後觸發(Build after other projects are build)
+* 定時構建(Build periodically)
+* 輪詢(Poll SCM)
+
+#### 觸發遠程構建
+透過remote address觸發，token最好是加密，透過訪問remote address去觸發流程，適合某些系統有時候需要觸發項目時使用。
+
+#### 其他工程構建後觸發
+當其他工程構建完成後會觸發此構建。
+1. 創建pre_job project
+2. 配置需要觸發的工程
+
+#### 定時構建
+需要設定定時規則，定時規則表示共有5個值，從左向右分別為：分、時、日、月、周，H代表的是參數(變化的，可以理解為起點)。
+```bash
+# 每30分鐘構建一次(例如這邊H的意思是從每個小時的30分鐘開始，/表示每隔)
+H/30 * * * *
+
+# 每2個小時構建一次
+H H/2 * * *
+
+# 每天8時 12時 22時構建(多個時間點中間用逗號隔開)
+0 8,12,22 * * *
+
+# 每天中午12點
+H 12 * * *
+
+# 每個小時的前半個小時內的每10分鐘
+H(0-29)/10 * * * *
+
+# 每兩個小時一次，每個工作日上午9點到下午5點(可能是10:38 12:38 2:38 4: 38)
+H H(9-16)/2 * * 1-5
+```
+
+#### 輪詢
+定時掃描本地原始碼託管服務器的原始碼是否有變更，如果有變更就觸發項目構建。系統開銷較大，不建議使用。
+
+### Jenkins項目構建項目細節(2)-Git hook自動觸發構建
+輪詢SCM可以實現Gitlab更新後項目自動構建，但是輪詢SCM的性能不佳。另一種方法是利用GitLab的webhook來實現push後立即觸發項目構建。
+
+* 輪詢SCM原理：Jenkins定時發送請求查看Gitlab有無變動
+* webhook原理：GitLab變動後發送構建請求給Jenkins
+
+#### 使用步驟
+1. 安裝Gitlab Plugin
+2. Jenkins設置自動構建 : 在Build Triggers就能看到新安裝的gitlab hook，選擇此選項
+3. GitLab配置webhook : 先用管理者登入GitLab，開啟相關功能。Admin Area -> Settings -> Network，選取"Allow requests to the local network from web hooks and services"
+4. 給專案添加webhook，點選專案 -> Settings -> Webhooks，輸入從Jenkins取得的webhook Url(可以先用gitlab test進行測試)
+5. 在Jenkins開放外部認證功能 : Manage Jenkins -> Configure System，取消"Enable authentication for '/project' end-point"
+
+ 
+
+
 ## Reference
 [GitLab Docs](https://docs.gitlab.com/ee/)
 
