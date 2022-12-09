@@ -570,7 +570,7 @@ pipeline {
 }
 ```
 
-### Jenkins項目構建項目細節(1)-常用的構建觸發器
+### 常用的構建觸發器
 Jenkins內建4種建構觸發器 : 
 * 觸發遠程構建
 * 其他工程構建後觸發(Build after other projects are build)
@@ -610,7 +610,7 @@ H H(9-16)/2 * * 1-5
 #### 輪詢
 定時掃描本地原始碼託管服務器的原始碼是否有變更，如果有變更就觸發項目構建。系統開銷較大，不建議使用。
 
-### Jenkins項目構建項目細節(2)-Git hook自動觸發構建
+### Git hook自動觸發構建
 輪詢SCM可以實現Gitlab更新後項目自動構建，但是輪詢SCM的性能不佳。另一種方法是利用GitLab的webhook來實現push後立即觸發項目構建。
 
 * 輪詢SCM原理：Jenkins定時發送請求查看Gitlab有無變動
@@ -622,9 +622,119 @@ H H(9-16)/2 * * 1-5
 3. GitLab配置webhook : 先用管理者登入GitLab，開啟相關功能。Admin Area -> Settings -> Network，選取"Allow requests to the local network from web hooks and services"
 4. 給專案添加webhook，點選專案 -> Settings -> Webhooks，輸入從Jenkins取得的webhook Url(可以先用gitlab test進行測試)
 5. 在Jenkins開放外部認證功能 : Manage Jenkins -> Configure System，取消"Enable authentication for '/project' end-point"
+6. 設置完成，之後即可透過gitlab hook自動構建
 
  
+### Jenkins的參數化構建
+有時在項目構建的過程中，需要根據使用者的輸入動態傳入參數，從而影響整個構建結果，這時就可以使用參數化構建。
 
+#### (Demo)項目創建分支並推送到Gitlab上
+1. 在構建配置中找到"This project is parameterized"並勾選，選擇String parameter，Name設定為branch，Default設為master
+2. 這時在項目內左邊會多一個"Build with Parameters"，點選後就可以輸入參數，但使用前須先修改腳本的寫法
+3. 將腳本中stage為pull code的區塊內的master更改為${branch}，然後將此Jenkinsfile上傳至Gitlab
+4. 在專案中加入其他分支
+5. 在Build with Parameters輸入對應的分支並構建
+
+### 設置Mail Server發送構建結果
+* 安裝Email Extension Template Plugin(加強原本Extension功能，提供模板)
+* 設置Mail相關參數，Manage Jenkins -> Configure System(Jenkins Location & Extended Email Notification & Email Notification)
+* 配置完成可以點選Test 
+* 準備郵件內容，在項目根目錄下編寫email.html並push到Gitlab，變數可以從Manage Jenkins -> Configure System中的"Content Token Reference"查詢，點擊右邊的"?"可以展開細節
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>$PROJECT_NAME - Build # $BUILD_NUMBER </title>
+</head>
+
+<body leftmargin ="8" maginwidth="0" topmargin="8" marginheight="4"
+      offset="0">
+<div>
+    <table width="100%" cellpadding="0" cellspacing="0"
+           style="font-size: 11pt; font-family: Tahoma, Arial, Helvetica, sans-serif">
+        <tr>
+            <td>(本郵件由Jenkins自動發送，請勿回覆！)</td>
+        </tr>
+        <tr>
+            <td>
+                <h2> <font color="#0000FF">Result -${BUILD_STATUS}</font> </h2></td>
+        </tr>
+        <tr>
+            <td>
+                <br /><b><font color="#0B610B">Info</font></b>
+                <hr size="2" width="100%" align="center" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <ul>
+                    <!--li>詳細測試報告 ：<a href="${PROJECT_URL}ws/target/jmeter/html">${PROJECT_URL}target/jmeter/html</a></li-->
+                    <li>項目名稱 ：系統檢查</li>
+                    <li>構建編號 ：第${BUILD_NUMBER}次構建</li>
+                    <li>觸發原因 ：${CAUSE}</li>
+                    <li>構建日誌 ：<a href="${BUILD_URL}console">${BUILD_URL}console</a></li>
+                    <li>構建 Url ：<a href="${BUILD_URL}">${BUILD_URL}</a></li>
+                    <li>工作目錄 : <a href="${PROJECT_URL}ws">${PROJECT_URL}ws</a></li>
+                    <li>項目 Url ：<a href="${PROJECT_URL}">${PROJECT_URL}</a></li>
+                    <li>歷史變更記錄 ：<a href="${PROJECT_URL}changes">${PROJECT_URL}changes</a></li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <br /> <b><font color="#0B610B">詳細報告請查閱附件(報告記錄了介面的詳細請求和回應)</font></b>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <br /> <b><font color="#0B610B">匯總報告如下:</font></b>
+                <hr size="4" width="100%" align="center" />
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" align="center">
+                <div>${FILE,path="html/TestReport${BUILD_TIMESTAMP}.html"}</div>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>
+```
+* 修改腳本，關於post語法可以從Pipeline Syntax -> Declarative Directive Generator中查詢，選擇"post: Post Stage or Build Conditions"並根據條件產生對應的語法。郵件內容則選擇"emailext: Extended Email"產生。
+```bash
+pipeline {
+    agent any
+
+    stages {
+        stage('pull code') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'xxx', url: 'git url']]])
+            }
+        }
+        stage('build projct') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('deploy project') {
+            steps {
+                deploy adapters: [tomcat8(credentialsId: 'xxxxx', path: '', url: 'url')], contextPath: null, war: 'target/*.war'
+            }
+        }
+    }
+    post {
+        always {
+            emailext(
+                subject: 'Notification：${PROJECT_NAME} - Build # ${BUILD_NUMBER} - ${BUILD_STATUS}!',
+                body: '${FILE,path="email.html"}',
+                to: 'receiver'
+            )
+        }
+    }
+}
+```
 
 ## Reference
 [GitLab Docs](https://docs.gitlab.com/ee/)
