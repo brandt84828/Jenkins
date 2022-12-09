@@ -772,8 +772,9 @@ Username : SSH服務使用的用戶名，使用key進行連接時為key指定的
 
 Remote Derictory : 遠程機器上真實存在的目錄，並且"Username"指定的使用者要有訪問此目錄的許可權，Plugin將把檔案傳送到此目錄下。
 ```
+* 配置完成即可使用
 
-* 確定路徑
+* 注意事項
 ```bash
 在系統配置的時候會設定Remote Directory，指的是遠端主機的目錄，這會與後續在Project設定的Remote Directory互相配合。
 最後的遠端路徑 = 系統配置的Remote Directory + 建置時配置的Remote Directory
@@ -782,10 +783,9 @@ Remote Derictory : 遠程機器上真實存在的目錄，並且"Username"指定
 舉例：
 如果/var/lib/jenkins/workspace/projectA/md/xx.md的話，在下面source file中只要寫md/xx.md
 
- 
-三、去首碼
 如果不去首碼，上面的例子會在遠端目錄上生成如下目錄/remote directory/md/xx.md，而需要的只有md檔，所以透過remove prefix選項可以把md/去掉，只取得md檔。
 ```
+
 
 ## Reference
 [GitLab Docs](https://docs.gitlab.com/ee/)
