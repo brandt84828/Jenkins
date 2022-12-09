@@ -736,7 +736,60 @@ pipeline {
 }
 ```
 
+## SonarQube程式碼檢測平台
+SonarQube是一個用於管理程式碼品質的開源平台，可以快速的定位程式碼中潛在或明顯的錯誤。
+
+
+## Plugin
+
+### Publish Over SSH
+* 安裝Publish Over SSH Plugin
+* 去Manage Jenkins -> Configure System中進行設置
+```bash
+參數說明
+Passphrase：SSH的密碼
+* 使用用戶名/密碼登錄時的密碼
+* 使用私鑰登錄時為私鑰的密碼
+
+Path to key：
+SSH私鑰的檔案路徑，路徑可以是絕對路徑，也可以是相對$JENKINS_HOME的相對路徑
+
+Key：私鑰檔案的內容
+
+如果"Key"和"Path to key"都設置，則"Key"的優先順序較高，私鑰的密碼是"Passphrase"中設置的內容。
+
+Disable exec：禁止在目的機上執行命令，勾選後將會忽略在Job配置中"Exec command"選項中設置的命令。
+```
+
+* 配置SSH Servers
+```bash
+參數說明
+Name : SSH節點配置的名稱，在Job中使用Publish over SSH Plugin時，此名稱將出現在"SSH Server"中"Name"的下拉清單中。
+
+Hostname : 通過SSH連接到的機器的主機名稱或IP
+
+Username : SSH服務使用的用戶名，使用key進行連接時為key指定的用戶名
+
+Remote Derictory : 遠程機器上真實存在的目錄，並且"Username"指定的使用者要有訪問此目錄的許可權，Plugin將把檔案傳送到此目錄下。
+```
+
+* 確定路徑
+```bash
+在系統配置的時候會設定Remote Directory，指的是遠端主機的目錄，這會與後續在Project設定的Remote Directory互相配合。
+最後的遠端路徑 = 系統配置的Remote Directory + 建置時配置的Remote Directory
+ 
+在建置時配置時，Source相對路徑問題，為var/jenkins_home/workspace/[project]/
+舉例：
+如果/var/lib/jenkins/workspace/projectA/md/xx.md的話，在下面source file中只要寫md/xx.md
+
+ 
+三、去首碼
+如果不去首碼，上面的例子會在遠端目錄上生成如下目錄/remote directory/md/xx.md，而需要的只有md檔，所以透過remove prefix選項可以把md/去掉，只取得md檔。
+```
+
 ## Reference
 [GitLab Docs](https://docs.gitlab.com/ee/)
 
 [Jenkins](https://www.jenkins.io/download/)
+
+[SonarQube](https://www.sonarqube.org/)
