@@ -742,7 +742,15 @@ SonarQube是一個用於管理程式碼品質的開源平台，可以快速的�
 ### 安裝SonarQube
 1. 安裝MySQL/Postgrel SQL(新版已不支援MySQL)
 2. 安裝SonarQube(可用docker & k8s)
-```
+
+### Jenkins + SonarQube實現原始碼審查
+![JenkinsToSonarQubeFlow](/Pictures/JenkinsToSonarQubeFlow.jpg)
+
+* 安裝SonarQube Scanner Plugin
+* 新增一個Scanner : Manage Jenkins -> Global Tool Configuration -> SonarQube Scanner，新增一個SonarQube Scanner。
+* 新增一個SonarQube Server : Manage Jenkins -> Configure System -> SonarQube servers，新增一個SonarQube Server。
+* 添加SonarQube憑證 : Manage Jenkins -> Manage Credentials -> Stores scoped to Jenkins-global，新增一個Secret text，然後把從SonarQube取得的token加入。
+
 
 ## Plugin
 
