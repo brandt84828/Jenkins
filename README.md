@@ -739,6 +739,10 @@ pipeline {
 ## SonarQube程式碼檢測平台
 SonarQube是一個用於管理程式碼品質的開源平台，可以快速的定位程式碼中潛在或明顯的錯誤。
 
+### 安裝SonarQube
+1. 安裝MySQL/Postgrel SQL(新版已不支援MySQL)
+2. 安裝SonarQube(可用docker & k8s)
+```
 
 ## Plugin
 
