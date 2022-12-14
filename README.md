@@ -751,6 +751,78 @@ SonarQube是一個用於管理程式碼品質的開源平台，可以快速的�
 * 新增一個SonarQube Server : Manage Jenkins -> Configure System -> SonarQube servers，新增一個SonarQube Server。
 * 添加SonarQube憑證 : Manage Jenkins -> Manage Credentials -> Stores scoped to Jenkins-global，新增一個Secret text，然後把從SonarQube取得的token加入。
 
+### 非Pipeline項目
+* 在Build內增加構建步驟，點選Execute SonarQube Scanner。
+```bash
+Task to run : scan
+
+#兩種選擇一種，看是要以檔案的方式提供或是直接寫在Jenkins上，參考下方內容
+Path to project properties || Analysis properties
+```
+* 內容
+```bash
+# must be unique in a given SonarQube instance
+# 這裡的web_demo需要換成自己的專案名
+sonar.projectKey=web_demo
+# this is the name and version displayed in the SonarQube UI. Was mandatory
+prior to SonarQube 6.1.
+sonar.projectName=web_demo #寫自己的專案名稱
+sonar.projectVersion=1.0
+# Path is relative to the sonar-project.properties file. Replace "\" by "/" on
+Windows.
+# This property is optional if sonar.modules is set.
+sonar.sources=. #掃描的路徑，ex:/src/**
+sonar.exclusions=**/test/**,**/target/** #排除的路徑
+sonar.java.source=1.8
+sonar.java.target=1.8
+sonar.java.binaries=./target/classes
+# Encoding of the source code. Default is default system encoding
+sonar.sourceEncoding=UTF-8
+```
+
+* 構建完成後可以到SonarQube查看結果。
+
+### Pipeline項目
+* 產生一個sonar-project.properties
+```bash
+# must be unique in a given SonarQube instance
+# 這裡的web_demo需要換成自己的專案名
+sonar.projectKey=web_demo
+# this is the name and version displayed in the SonarQube UI. Was mandatory
+prior to SonarQube 6.1.
+sonar.projectName=web_demo #寫自己的專案名稱
+sonar.projectVersion=1.0
+# Path is relative to the sonar-project.properties file. Replace "\" by "/" on
+Windows.
+# This property is optional if sonar.modules is set.
+sonar.sources=. #掃描的路徑，ex:/src/**
+sonar.exclusions=**/test/**,**/target/** #排除的路徑
+sonar.java.source=1.8
+sonar.java.target=1.8
+sonar.java.binaries=./target/classes
+# Encoding of the source code. Default is default system encoding
+sonar.sourceEncoding=UTF-8
+```
+
+* 在Jenkinsfile內加入
+```
+stage('Code checking') {
+    steps{
+
+        script {
+        	// 引入Scanner工具，SonarQube Scanner與Global Tool Configuration -> SonarQube Scanner裡的設置要相同
+            scannerHome = tool 'sonar-scanner'
+        }
+        // 引入Server env，要與Configure System -> SonarQube servers裡的Name相同
+        withSonarQubeEnv('sonarqube') {
+            sh "${scannerHome}/bin/sonar-scanner"
+        }
+    }
+}
+```
+
+* 構建完成後可以到SonarQube查看結果。
+
 
 ## Plugin
 
