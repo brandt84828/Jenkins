@@ -824,6 +824,13 @@ stage('Code checking') {
 * 構建完成後可以到SonarQube查看結果。
 
 
+## Jenkins+Docker+SpringCloud微服務持續整合
+![Flow](/Pictures/Advanced%20CI%20flow.jpg)
+
+
+
+
+
 ## Plugin
 
 ### Publish Over SSH
