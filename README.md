@@ -827,8 +827,19 @@ stage('Code checking') {
 ## Jenkins+Docker+SpringCloud微服務持續整合
 ![Flow](/Pictures/Advanced%20CI%20flow.jpg)
 
-
-
+### Docker-Compose
+| 命令 | 用處 |
+| ---- | --- |
+| FROM image_name:tag	  |  |
+| ENV key value  | 設置環境變數 |
+| RUN command	  | 編譯images時執行的腳本 |
+| CMD  | 設置container的啟動命令 |
+| ENTRYPOINT | 設置container的入口程式 |
+| ADD source_dir/filedest_dir/file	  | 將來源檔案複製到Container內，如果是壓縮檔案會複製完後自動解壓縮 |
+| COPY source_dir/filedest_dir/file  | 和ADD類似，但不會自動解壓縮 |
+| WORKDIR path_dir	  | 設置工作目錄 |
+| ARG	  | 設置編譯images時加入的參數 |
+| VOLUMN	  | 設置掛載 |
 
 
 ## Plugin
