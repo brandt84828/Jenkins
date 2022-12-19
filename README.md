@@ -841,6 +841,36 @@ stage('Code checking') {
 | ARG	  | 設置編譯images時加入的參數 |
 | VOLUMN	  | 設置掛載 |
 
+### Harbor
+Harbor是一個用於儲存和分發Docker鏡像的企業級Registry伺服器。
+
+除了Harbor這個私有鏡像倉庫外，還有Docker官方提供的Registry。相對Registry，Harbor具有很多優勢：
+* 提供分層傳輸機制，優化網路傳輸 : Docker鏡像是分層的，而如果每次傳輸都使用全量檔（所以用FTP的方式並不適合），顯然不實際。必須提供識別分層傳輸的機制，以層的UUID為標識，確定傳輸的物件。
+* 提供WEB UI，優化使用者體驗 : 只用鏡像的名字來進行上傳/下載很不方便，需要有一個使用者介面可以支持登入、搜索功能，包括區分公有、私有鏡像
+* 支持水平擴展集群 : 當有使用者對鏡像的上傳/下載操作集中在某伺服器，需要對相應的訪問壓力作分配。
+* 良好的安全機制 : 企業中的開發團隊有很多不同的職位，對於不同的職位人員，分配不同的許可權，具有更好的安全性。
+
+#### 常用指令
+```bash
+# Push image to Harbor
+docker push $harbor_ip:$harbor_port/$harbor_project_name/$image_name
+
+# 需要在Docker裡，把Harbor加入白名單
+vim /etc/docker/daemon.json
+加入"insecure-registries": ["ip:port"]
+
+# 重啟Docker
+systemctl restart docker
+
+# 登入Harbor
+docker login $harbor_ip:$harbor_port
+
+# 執行push
+docker push $harbor_ip:$harbor_port/$harbor_repo_name/$image_name
+
+# 下載，可直接從harbor內取得pull cmd
+```
+
 
 ## Plugin
 
