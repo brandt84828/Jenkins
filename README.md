@@ -863,7 +863,7 @@ vim /etc/docker/daemon.json
 systemctl restart docker
 
 # 登入Harbor
-docker login $harbor_ip:$harbor_port
+docker login -u $user -p $password $harbor_ip:$harbor_port
 
 # 執行push
 docker push $harbor_ip:$harbor_port/$harbor_repo_name/$image_name
