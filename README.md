@@ -871,6 +871,18 @@ docker push $harbor_ip:$harbor_port/$harbor_repo_name/$image_name
 # 下載，可直接從harbor內取得pull cmd
 ```
 
+## 基於Kubernetes構建Jenkins
+
+### Master-Slave分布式構建
+![Master-Slave](./Pictures/Master%20Slave.jpg)
+Jenkins的Master-Slave分散式構建，就是透過將構建過程分配到Slave Node，減輕Master Node的壓力，而且可以同時構建多個，類似負載均衡的概念。
+
+### 實現Master-Slave分布式構建
+1. 開啟Agent TCP Port : Manage Jenkins -> Configure Global Security -> Agents
+2. 新建Node : Manage Jenkin -> Manage Node and Clouds -> New Node
+
+
+
 
 ## Plugin
 
