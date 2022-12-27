@@ -881,6 +881,17 @@ Jenkins的Master-Slave分散式構建，就是透過將構建過程分配到Slav
 1. 開啟Agent TCP Port : Manage Jenkins -> Configure Global Security -> Agents
 2. 新建Node : Manage Jenkin -> Manage Node and Clouds -> New Node
 
+### 傳統Jenkins的Master-Slave缺點
+* Master Node發生單點故障，整個服務不能用
+* 每個Slave Node的環境配置不一樣，來完成不同語言的編譯打包等操作，但是這些差異化的配置使用上不方便，維護成本也比較高
+* 資源分配不均衡，有的Slave Node需要排隊，有的Slave Node處於idle狀態
+* 資源浪費，每台Slave Node可能是實體機或VM，當Slave處於idle狀態時，也不會釋放掉資源
+
+### Kubernetes+Jenkins的優點
+* 服務高可用 : 當Jenkins Master出現故障時，Kubernetes會自動創建一個新的Jenkins Master容器，並且將Volume分配給新創建的容器，保證數據不丟失，從而達到集群服務高可用。
+* 動態伸縮，合理使用資源 : 每次運行Job時，會自動創建一個Jenkins Slave，Job完成後，Slave自動註銷並刪除容器，資源自動釋放，而且 Kubernetes會根據每個資源的使用情況，動態分配Slave到空閒的節點上創建，降低出現因某節點資源利用率高，還排隊等待在該節點的情況。
+* 擴展性高：當Kubernetes集群的資源嚴重不足而導致Job排隊等待時，可以很容易的增加一個Kubernetes Node到集群中。
+
 
 
 
