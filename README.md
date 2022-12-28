@@ -892,8 +892,42 @@ Jenkins的Master-Slave分散式構建，就是透過將構建過程分配到Slav
 * 動態伸縮，合理使用資源 : 每次運行Job時，會自動創建一個Jenkins Slave，Job完成後，Slave自動註銷並刪除容器，資源自動釋放，而且 Kubernetes會根據每個資源的使用情況，動態分配Slave到空閒的節點上創建，降低出現因某節點資源利用率高，還排隊等待在該節點的情況。
 * 擴展性高：當Kubernetes集群的資源嚴重不足而導致Job排隊等待時，可以很容易的增加一個Kubernetes Node到集群中。
 
+### Jenkins與Kubernetes整合
+* 安裝Kubernetes Plugin
+* Manage Jenkins -> Manage Node and Clouds -> Configure Clouds -> Add a new cloud-Kubernetes
+* Build image about Jenkins-Slave
+* Create a pipeline script
+```bash
+podTemplate(containers: [
+    containerTemplate(name: 'maven', image: 'maven:3.8.1-jdk-8', command: 'sleep', args: '99d'),
+    containerTemplate(name: 'golang', image: 'golang:1.16.5', command: 'sleep', args: '99d')
+  ]) {
 
+    node(POD_LABEL) {
+        stage('Get a Maven project') {
+            git 'https://github.com/jenkinsci/kubernetes-plugin.git'
+            container('maven') {
+                stage('Build a Maven project') {
+                    sh 'mvn -B -ntp clean install'
+                }
+            }
+        }
 
+        stage('Get a Golang project') {
+            git url: 'https://github.com/hashicorp/terraform.git', branch: 'main'
+            container('golang') {
+                stage('Build a Go project') {
+                    sh '''
+                    mkdir -p /go/src/github.com/hashicorp
+                    ln -s `pwd` /go/src/github.com/hashicorp/terraform
+                    cd /go/src/github.com/hashicorp/terraform && make
+                    '''
+                }
+            }
+        }
+
+    }
+```
 
 ## Plugin
 
@@ -948,3 +982,5 @@ Remote Derictory : 遠程機器上真實存在的目錄，並且"Username"指定
 [Jenkins](https://www.jenkins.io/download/)
 
 [SonarQube](https://www.sonarqube.org/)
+
+[Jenkins-Kubernetes Plugin](https://plugins.jenkins.io/kubernetes/)
